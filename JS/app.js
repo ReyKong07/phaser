@@ -10,7 +10,7 @@ class MainScene extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image('jungle', '../img/background.png');
+        this.load.image('jungle', './img/background.png');
         this.load.image('platform1', '../img/platform1.png');
         this.load.image('ground', '../img/platform4.png');
         this.load.image('pelota', '../img/pelota.png');
