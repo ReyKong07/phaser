@@ -10,16 +10,16 @@ class MainScene extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image('jungle', '../Assets/img/background.png');
-        this.load.image('platform1', '../Assets/img/platform1.png');
-        this.load.image('ground', '../Assets/img/platform4.png');
-        this.load.image('pelota', '../Assets/img/pelota.png');
-        this.load.image('bomb', '../Assets/img/bomb.png');
-        this.load.image('controlsPlayer1', '../Assets/img/player1.png');
-        this.load.image('controlsPlayer2', '../Assets/img/player2.png');
+        this.load.image('jungle', '../img/background.png');
+        this.load.image('platform1', '../img/platform1.png');
+        this.load.image('ground', '../img/platform4.png');
+        this.load.image('pelota', '../img/pelota.png');
+        this.load.image('bomb', '../img/bomb.png');
+        this.load.image('controlsPlayer1', '../img/player1.png');
+        this.load.image('controlsPlayer2', '../img/player2.png');
 
-        this.load.spritesheet('dude', '../Assets/img/dude.png', { frameWidth: 32, frameHeight: 48 });
-        this.load.spritesheet('secondPlayer', '../Assets/img/secondPlayer.png', { frameWidth: 32, frameHeight: 48 });
+        this.load.spritesheet('dude', '../img/dude.png', { frameWidth: 32, frameHeight: 48 });
+        this.load.spritesheet('secondPlayer', '../img/secondPlayer.png', { frameWidth: 32, frameHeight: 48 });
     }
 
     create() {
