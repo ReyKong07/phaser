@@ -1,52 +1,47 @@
+var level = 1;
+var playerQuantity = 1;
+var player = '';
+var player2 = '';
+var pelota = '';
 
-var level=1;
-var playerQuantity=1;
-var player= '';
-var player2='';
-var pelota= '';
 class MainScene extends Phaser.Scene {
-    constructor(){
-        super('gameScene')
+    constructor() {
+        super('gameScene');
     }
 
-    preload(){
-        this.load.baseURL = '../Assets/img/';
-        this.load.image('jungle', 'background.png');
-        this.load.image('platform1', 'platform1.png');
-        this.load.image('ground', 'platform4.png');
-        this.load.image('pelota', 'pelota.png');
-        this.load.image('bomb', 'bomb.png');
-        this.load.image('controlsPlayer1', 'player1.png');
-        this.load.image('controlsPlayer2', 'player2.png');
+    preload() {
+        this.load.image('jungle', '../Assets/img/background.png');
+        this.load.image('platform1', '../Assets/img/platform1.png');
+        this.load.image('ground', '../Assets/img/platform4.png');
+        this.load.image('pelota', '../Assets/img/pelota.png');
+        this.load.image('bomb', '../Assets/img/bomb.png');
+        this.load.image('controlsPlayer1', '../Assets/img/player1.png');
+        this.load.image('controlsPlayer2', '../Assets/img/player2.png');
 
-        this.load.spritesheet('dude', 'dude.png', {frameWidth: 32, frameHeight:48});
-        this.load.spritesheet('secondPlayer', 'secondPlayer.png', {frameWidth: 32, frameHeight:48});
-
+        this.load.spritesheet('dude', '../Assets/img/dude.png', { frameWidth: 32, frameHeight: 48 });
+        this.load.spritesheet('secondPlayer', '../Assets/img/secondPlayer.png', { frameWidth: 32, frameHeight: 48 });
     }
 
-    create(){
+    create() {
         this.add.image(250, 350, 'jungle').setScale(2.2);
-        var platform= this.physics.add.staticGroup();
+        var platform = this.physics.add.staticGroup();
         platform.create(150, 690, 'ground');
         platform.create(500, 690, 'ground');
-        
-        
-        if(level == 1){
+
+        if (level == 1) {
             platform.create(450, 320, 'ground');
             platform.create(100, 180, 'ground');
             platform.create(320, 560, 'platform1');
             platform.create(10, 450, 'ground');
-            
         }
-        if(level == 2){
+        if (level == 2) {
             platform.create(100, 100, 'ground');
             platform.create(1000, 100, 'ground');
             platform.create(500, 360, 'ground');
             platform.create(200, 250, 'ground');
             platform.create(870, 230, 'ground');
-            
         }
-        if(level == 3){
+        if (level == 3) {
             platform.create(500, 100, 'ground');
             platform.create(30, 100, 'ground');
             platform.create(1000, 100, 'ground');
@@ -54,187 +49,129 @@ class MainScene extends Phaser.Scene {
             platform.create(300, 250, 'ground');
             platform.create(560, 400, 'ground');
             platform.create(870, 230, 'ground');
-            
         }
 
-        player = this.physics.add.sprite(900, 300, 'dude').setScale(2); 
+        player = this.physics.add.sprite(900, 300, 'dude').setScale(2);
         player.setCollideWorldBounds(true);
         player.setBounce(0.2);
         this.physics.add.collider(player, platform);
 
-        if(playerQuantity==2){
-
-            player2 = this.physics.add.sprite(100, 300, 'secondPlayer'); 
+        if (playerQuantity == 2) {
+            player2 = this.physics.add.sprite(100, 300, 'secondPlayer');
             player2.setCollideWorldBounds(true);
             player2.setBounce(0.2);
             this.physics.add.collider(player2, platform);
         }
 
+        pelota = this.physics.add.group({
+            key: 'pelota',
+            repeat: 11,
+            setXY: { x: 12, y: 0, stepX: 90 }
+        });
+        this.physics.add.collider(pelota, platform);
+        pelota.children.iterate(function (child) {
+            child.setBounce(0.5);
+        });
 
-       pelota= this.physics.add.group({
-        key: 'pelota',
-        repeat: 11,
-        setXY: { x: 12, y: 0, stepX:90 }
-
-
-       })
-       this.physics.add.collider(pelota, platform);
-       pelota.children.iterate(function(child){
-        child.setBounce(0.5);
-       });
-
-       /* animaciones */
-       this.anims.create({
-        key: 'left',
-        frames: this.anims.generateFrameNumbers('dude', { start: 0, end: 3 }),
-        frameRate: 10,
-        repeat: -1
-    });
-    this.anims.create({
-        key: 'turn',
-        frames: [ { key: 'dude', frame: 4 } ],
-        frameRate: 20
-    });
-    this.anims.create({
-        key: 'right',
-        frames: this.anims.generateFrameNumbers('dude', { start: 5, end: 8 }),
-        frameRate: 10,
-        repeat: -1
-    });
-        
-
+        /* animaciones */
+        this.anims.create({
+            key: 'left',
+            frames: this.anims.generateFrameNumbers('dude', { start: 0, end: 3 }),
+            frameRate: 10,
+            repeat: -1
+        });
+        this.anims.create({
+            key: 'turn',
+            frames: [{ key: 'dude', frame: 4 }],
+            frameRate: 20
+        });
+        this.anims.create({
+            key: 'right',
+            frames: this.anims.generateFrameNumbers('dude', { start: 5, end: 8 }),
+            frameRate: 10,
+            repeat: -1
+        });
     }
 
-    update(){
+    update() {
         var tecla = this.input.keyboard.createCursorKeys();
-        if(tecla.left.isDown){
+        if (tecla.left.isDown) {
             player.setVelocityX(-160);
-            player.anims.play('left',true);
-
-        }else if(tecla.right.isDown){
+            player.anims.play('left', true);
+        } else if (tecla.right.isDown) {
             player.setVelocityX(160);
-            player.anims.play('right',true);
-
-        }else {
+            player.anims.play('right', true);
+        } else {
             player.setVelocityX(0);
-            player.anims.play('turn',true);
-
+            player.anims.play('turn', true);
         }
-        if(tecla.up.isDown && player.body.touching.down){
+        if (tecla.up.isDown && player.body.touching.down) {
             player.setVelocityY(-300);
         }
-
-
     }
-
 }
 
 class Menu extends Phaser.Scene {
-    constructor(){
-        super('menuScene')
+    constructor() {
+        super('menuScene');
     }
 
-    preload(){
+    preload() { }
 
-    }
+    create() { }
 
-    create(){
-
-
-    }
-
-    update(){
-
-        
-    }
-
+    update() { }
 }
 
 class LevelScene extends Phaser.Scene {
-    constructor(){
-        super('levelScene')
+    constructor() {
+        super('levelScene');
     }
 
-    preload(){
+    preload() { }
 
-    }
+    create() { }
 
-    create(){
-
-
-    }
-
-    update(){
-
-        
-    }
-
+    update() { }
 }
 
 class ModeScene extends Phaser.Scene {
-    constructor(){
-        super('modeScene')
+    constructor() {
+        super('modeScene');
     }
 
-    preload(){
+    preload() { }
 
-    }
+    create() { }
 
-    create(){
-
-
-    }
-
-    update(){
-
-        
-    }
-
+    update() { }
 }
 
 class ControlsScene extends Phaser.Scene {
-    constructor(){
-        super('controlsScene')
+    constructor() {
+        super('controlsScene');
     }
 
-    preload(){
+    preload() { }
 
-    }
+    create() { }
 
-    create(){
-
-
-    }
-
-    update(){
-
-        
-    }
-
+    update() { }
 }
+
 class EndScene extends Phaser.Scene {
-    constructor(){
-        super('endScene')
+    constructor() {
+        super('endScene');
     }
 
-    preload(){
-        
-        
-    }
+    preload() { }
 
-    create(){
-        
+    create() { }
 
-    }
-
-    update(){
-
-        
-    }
-
+    update() { }
 }
 
-const config ={
+const config = {
     type: Phaser.AUTO,
     width: 500,
     height: 700,
@@ -245,11 +182,10 @@ const config ={
             debug: false
         }
     },
-    scene:[MainScene,Menu,LevelScene,ControlsScene,EndScene],
+    scene: [MainScene, Menu, LevelScene, ControlsScene, EndScene],
     scale: {
         mode: Phaser.Scale.FIT
     }
-
 }
 
 new Phaser.Game(config);
