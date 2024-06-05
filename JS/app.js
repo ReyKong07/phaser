@@ -2,6 +2,7 @@ var level = 1;
 var playerQuantity = 1;
 var score = 0;
 var pelotas = '';
+let clickY = 0;
 
 class MainScene extends Phaser.Scene {
     constructor() {
@@ -104,17 +105,21 @@ class MainScene extends Phaser.Scene {
             frameRate: 10,
             repeat: -1
         });
+        
     }
-
+    
     startMove(pointer) {
         this.isMoving = true;
-        this.movePlayer(pointer); // Asegúrate de pasar el pointer aquí
+        this.movePlayer(pointer);
+        // Almacenar la posición Y del puntero en el momento del clic
+        clickY = pointer.y;
     }
 
     movePlayer(pointer) {
         const speed = 160; // Velocidad de movimiento del jugador
         const playerX = this.player.x;
         const pointerX = pointer.x;
+        const pointerY = pointer.y;
     
         // Si el puntero está a la izquierda del jugador, mueve al jugador a la izquierda
         if (pointerX < playerX) {
@@ -127,8 +132,8 @@ class MainScene extends Phaser.Scene {
             this.player.anims.play('right', true);
         }
     
-        // Si el jugador está en el suelo y se hace clic en la pantalla, haz que el jugador salte
-        if (pointer.isDown && this.player.body.touching.down) {
+        // Si el movimiento vertical es hacia arriba y el jugador está en el suelo, haz que el jugador salte
+        if (pointer.isDown && pointerY < clickY && this.player.body.touching.down) {
             this.player.setVelocityY(-300); // Velocidad de salto del jugador
         }
     }
