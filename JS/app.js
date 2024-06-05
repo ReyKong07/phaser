@@ -1,8 +1,7 @@
 var level = 1;
 var playerQuantity = 1;
-var player = '';
-var player2 = '';
-var pelota = '';
+var score = 0;
+var pelotas = '';
 
 class MainScene extends Phaser.Scene {
     constructor() {
@@ -51,29 +50,43 @@ class MainScene extends Phaser.Scene {
             platform.create(870, 230, 'ground');
         }
 
-        player = this.physics.add.sprite(900, 300, 'dude').setScale(2);
-        player.setCollideWorldBounds(true);
-        player.setBounce(0.2);
-        this.physics.add.collider(player, platform);
+        this.player = this.physics.add.sprite(900, 300, 'dude').setScale(2);
+        this.player.setCollideWorldBounds(true);
+        this.player.setBounce(0.2);
+        this.player.score = 0;
+        this.physics.add.collider(this.player, platform);
 
         if (playerQuantity == 2) {
-            player2 = this.physics.add.sprite(100, 300, 'secondPlayer');
-            player2.setCollideWorldBounds(true);
-            player2.setBounce(0.2);
-            this.physics.add.collider(player2, platform);
+            this.player2 = this.physics.add.sprite(100, 300, 'secondPlayer');
+            this.player2.setCollideWorldBounds(true);
+            this.player2.setBounce(0.2);
+            this.physics.add.collider(this.player2, platform);
         }
 
-        pelota = this.physics.add.group({
-            key: 'pelota',
-            repeat: 11,
-            setXY: { x: 12, y: 0, stepX: 90 }
-        });
-        this.physics.add.collider(pelota, platform);
-        pelota.children.iterate(function (child) {
-            child.setBounce(0.5);
-        });
+        // Crear el grupo de pelotas
+        this.pelotas = this.physics.add.group();
+        const numPelotas = 3;
+        for (let i = 0; i < numPelotas; i++) {
+            const x = Phaser.Math.Between(0, 450);
+            const y = Phaser.Math.Between(0, 500);
+            const pelota = this.pelotas.create(x, y, 'pelota');
+            pelota.setBounce(0.5);
+        }
 
-        /* animaciones */
+        // Configurar colisiones entre pelotas y plataformas
+        this.physics.add.collider(this.pelotas, platform);
+
+        // Configurar la superposición entre el jugador y las pelotas
+        this.physics.add.overlap(this.player, this.pelotas, this.agarroPelota, null, this);
+
+        // Configurar controles táctiles
+        this.input.on('pointerdown', this.startMove, this);
+        this.input.on('pointermove', this.movePlayer, this);
+        this.input.on('pointerup', this.stopMove, this);
+
+        this.isMoving = false;
+
+        // Animaciones
         this.anims.create({
             key: 'left',
             frames: this.anims.generateFrameNumbers('dude', { start: 0, end: 3 }),
@@ -93,20 +106,65 @@ class MainScene extends Phaser.Scene {
         });
     }
 
+    startMove(pointer) {
+        this.isMoving = true;
+        this.movePlayer(pointer); // Asegúrate de pasar el pointer aquí
+    }
+
+    movePlayer(pointer) {
+        const speed = 160; // Velocidad de movimiento del jugador
+        const playerX = this.player.x;
+        const pointerX = pointer.x;
+    
+        // Si el puntero está a la izquierda del jugador, mueve al jugador a la izquierda
+        if (pointerX < playerX) {
+            this.player.setVelocityX(-speed);
+            this.player.anims.play('left', true);
+        }
+        // Si el puntero está a la derecha del jugador, mueve al jugador a la derecha
+        else if (pointerX > playerX) {
+            this.player.setVelocityX(speed);
+            this.player.anims.play('right', true);
+        }
+    
+        // Si el jugador está en el suelo y se hace clic en la pantalla, haz que el jugador salte
+        if (pointer.isDown && this.player.body.touching.down) {
+            this.player.setVelocityY(-300); // Velocidad de salto del jugador
+        }
+    }
+    
+
+    stopMove() {
+        this.isMoving = false;
+    }
+
+    agarroPelota(player, pelota) {
+        pelota.disableBody(true, true);
+        player.score += 10;
+
+        if (this.pelotas.countActive(true) === 0) {
+            this.pelotas.children.iterate(function (child) {
+                const x = Phaser.Math.Between(0, 450);
+                const y = Phaser.Math.Between(0, 500);
+                child.enableBody(true, x, y, true, true);
+            });
+        }
+    }
+
     update() {
         var tecla = this.input.keyboard.createCursorKeys();
         if (tecla.left.isDown) {
-            player.setVelocityX(-160);
-            player.anims.play('left', true);
+            this.player.setVelocityX(-160);
+            this.player.anims.play('left', true);
         } else if (tecla.right.isDown) {
-            player.setVelocityX(160);
-            player.anims.play('right', true);
+            this.player.setVelocityX(160);
+            this.player.anims.play('right', true);
         } else {
-            player.setVelocityX(0);
-            player.anims.play('turn', true);
+            this.player.setVelocityX(0);
+            this.player.anims.play('turn', true);
         }
-        if (tecla.up.isDown && player.body.touching.down) {
-            player.setVelocityY(-300);
+        if (tecla.up.isDown && this.player.body.touching.down) {
+            this.player.setVelocityY(-300);
         }
     }
 }
@@ -189,3 +247,4 @@ const config = {
 }
 
 new Phaser.Game(config);
+
