@@ -2,7 +2,6 @@ var level = 1;
 var playerQuantity = 1;
 var score = 0;
 var pelotas = '';
-let clickY = 0;
 
 class MainScene extends Phaser.Scene {
     constructor() {
@@ -86,6 +85,8 @@ class MainScene extends Phaser.Scene {
         this.input.on('pointerup', this.stopMove, this);
 
         this.isMoving = false;
+        this.startPointerX = 0;
+        this.startPointerY = 0;
 
         // Animaciones
         this.anims.create({
@@ -105,42 +106,52 @@ class MainScene extends Phaser.Scene {
             frameRate: 10,
             repeat: -1
         });
-        
     }
-    
+
     startMove(pointer) {
         this.isMoving = true;
+        this.startPointerX = pointer.x;
+        this.startPointerY = pointer.y;
         this.movePlayer(pointer);
-        // Almacenar la posición Y del puntero en el momento del clic
-        clickY = pointer.y;
     }
 
     movePlayer(pointer) {
-        const speed = 160; // Velocidad de movimiento del jugador
-        const playerX = this.player.x;
-        const pointerX = pointer.x;
-        const pointerY = pointer.y;
+        if (this.isMoving) {
+            const deltaX = pointer.x - this.startPointerX;
+            const deltaY = pointer.y - this.startPointerY;
     
-        // Si el puntero está a la izquierda del jugador, mueve al jugador a la izquierda
-        if (pointerX < playerX) {
-            this.player.setVelocityX(-speed);
-            this.player.anims.play('left', true);
+             // Movimiento horizontal
+        if (deltaX < -10) {
+            this.player.setVelocityX(-160);
+            if (!this.player.anims.isPlaying || this.player.anims.currentAnim.key !== 'left') {
+                this.player.anims.play('left');
+            }
+        } else if (deltaX > 10) {
+            this.player.setVelocityX(160);
+            if (!this.player.anims.isPlaying || this.player.anims.currentAnim.key !== 'right') {
+                this.player.anims.play('right');
+            }
+        } else {
+            this.player.setVelocityX(0);
+            if (!this.player.anims.isPlaying || this.player.anims.currentAnim.key !== 'turn') {
+                this.player.anims.play('turn');
+            }
         }
-        // Si el puntero está a la derecha del jugador, mueve al jugador a la derecha
-        else if (pointerX > playerX) {
-            this.player.setVelocityX(speed);
-            this.player.anims.play('right', true);
-        }
+
     
-        // Si el movimiento vertical es hacia arriba y el jugador está en el suelo, haz que el jugador salte
-        if (pointer.isDown && pointerY < clickY && this.player.body.touching.down) {
-            this.player.setVelocityY(-300); // Velocidad de salto del jugador
+            // Salto
+            if (deltaY < -30 && this.player.body.touching.down) {
+                this.player.setVelocityY(-300);
+            }
         }
     }
-    
 
     stopMove() {
         this.isMoving = false;
+        this.player.setVelocityX(0);
+        if (!this.player.anims.isPlaying || this.player.anims.currentAnim.key !== 'turn') {
+            this.player.anims.play('turn');
+        }
     }
 
     agarroPelota(player, pelota) {
@@ -160,19 +171,25 @@ class MainScene extends Phaser.Scene {
         var tecla = this.input.keyboard.createCursorKeys();
         if (tecla.left.isDown) {
             this.player.setVelocityX(-160);
-            this.player.anims.play('left', true);
+            if (!this.player.anims.isPlaying || this.player.anims.currentAnim.key !== 'left') {
+                this.player.anims.play('left');
+            }
         } else if (tecla.right.isDown) {
             this.player.setVelocityX(160);
-            this.player.anims.play('right', true);
+            if (!this.player.anims.isPlaying || this.player.anims.currentAnim.key !== 'right') {
+                this.player.anims.play('right');
+            }
         } else {
             this.player.setVelocityX(0);
-            this.player.anims.play('turn', true);
+            if (!this.player.anims.isPlaying || this.player.anims.currentAnim.key !== 'turn') {
+                this.player.anims.play('turn');
+            }
         }
         if (tecla.up.isDown && this.player.body.touching.down) {
             this.player.setVelocityY(-300);
         }
     }
-}
+}    
 
 class Menu extends Phaser.Scene {
     constructor() {
@@ -252,4 +269,5 @@ const config = {
 }
 
 new Phaser.Game(config);
+
 
