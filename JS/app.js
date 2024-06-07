@@ -5,6 +5,8 @@ var pelotas = '';
 var animLeft='';
 var jugador= '';
 var usandoTeclas=false;
+var contPelotas=0;
+var laCopa= false;
 
 class MainScene extends Phaser.Scene {
     constructor() {
@@ -14,8 +16,10 @@ class MainScene extends Phaser.Scene {
     preload() {
         this.load.image('jungle', './JS/img/background.png');
         this.load.image('platform1', './JS/img/platform1.png');
+        this.load.image('platformaCopa', './JS/img/platform1.png');
         this.load.image('ground', './JS/img/platform4.png');
         this.load.image('pelota', './JS/img/pelota.png');
+        this.load.image('copa', './JS/img/copa.png');
         this.load.image('bomb', './JS/img/bomb.png');
         this.load.image('controlsPlayer1', './JS/img/player1.png');
         this.load.image('controlsPlayer2', './JS/img/player2.png');
@@ -31,18 +35,36 @@ class MainScene extends Phaser.Scene {
         platform.create(500, 690, 'ground');
 
         if (level == 1) {
-            platform.create(450, 320, 'ground');
-            platform.create(100, 180, 'ground');
-            platform.create(320, 560, 'platform1');
-            platform.create(10, 450, 'ground');
+            this.platCopa=this.physics.add.staticImage(320, 150, 'platformaCopa');
+            platform.create(-20, 250, 'ground');//arriba 1
+            platform.create(450, 370, 'ground');//arriba 2
+            platform.create(10, 500, 'ground');//3
+            platform.create(320, 590, 'platform1');//pequeño
         }
+        
+       
+        
+        
        
 
-        jugador=this.player = this.physics.add.sprite(900, 300, 'dude').setScale(2);
+        this.player = this.physics.add.sprite(900, 300, 'dude').setScale(2);
         this.player.setCollideWorldBounds(true);
         this.player.setBounce(0.2);
         this.player.score = 0;
         this.physics.add.collider(this.player, platform);
+        this.physics.add.collider(this.player, this.platCopa);
+        
+        // Crear y mostrar el temporizador
+        this.timeLeft = 60;
+        this.timerText = this.add.text(250, 50, '60', { fontSize: '32px', fill: '#FFF' }).setOrigin(0.5);
+        this.pelotaText = this.add.text(80, 50, 'Pelotas: 0', { fontSize: '24px', fill: '#FFF' }).setOrigin(0.5);
+        
+        this.timerEvent = this.time.addEvent({
+            delay: 1000,
+            callback: this.updateTimer,
+            callbackScope: this,
+            loop: true
+        });
 
         
 
@@ -58,9 +80,11 @@ class MainScene extends Phaser.Scene {
 
         // Configurar colisiones entre pelotas y plataformas
         this.physics.add.collider(this.pelotas, platform);
+        
 
         // Configurar la superposición entre el jugador y las pelotas
         this.physics.add.overlap(this.player, this.pelotas, this.agarroPelota, null, this);
+        
 
         // Animaciones
         this.anims.create({
@@ -146,6 +170,13 @@ class MainScene extends Phaser.Scene {
                 }
             }
             
+            if (deltaY < -10 && this.player.body.touching.down) {
+                // Mover izquierda
+                this.player.setVelocityY(-300);
+                if (!this.player.anims.isPlaying  || this.player.anims.currentAnim.key !== 'turn' ) {
+                    this.player.anims.play('turn');
+                }
+            }
         }
     }
 
@@ -157,24 +188,40 @@ class MainScene extends Phaser.Scene {
 
             this.player.setVelocityX(0);
         }
-        /* if (!this.player.anims.isPlaying || this.player.anims.currentAnim.key !== 'turn') {
-            this.player.anims.play('turn');
-        } */
+       
+    }
+    updateTimer() {
+        this.timeLeft -= 1;
+        this.timerText.setText('' + this.timeLeft);
+
+        if (this.timeLeft <= 0) {
+            this.time.removeEvent(this.timerEvent);
+            this.scene.start('endScene');
+        }
     }
 
+    agarroCopa(copa){
+        copa.disableBody(true, true);
+        this.scene.start('winScene');
+    }
 
-   /*  agarroPelota(player, pelota) {
+    agarroPelota(player, pelota) {
         pelota.disableBody(true, true);
+        contPelotas++;
+        this.pelotaText.setText('Pelotas: ' + contPelotas)
         player.score += 10;
 
-        if (this.pelotas.countActive(true) === 0) {
+        if (this.pelotas.countActive(true) === 0 && (contPelotas < 7)) {
             this.pelotas.children.iterate(function (child) {
                 const x = Phaser.Math.Between(0, 450);
                 const y = Phaser.Math.Between(0, 500);
                 child.enableBody(true, x, y, true, true);
             });
+        }else if(contPelotas===9){
+            laCopa=true;
+            console.log('copa true');
         }
-    } */
+    } 
     
     update() {
         var tecla = this.input.keyboard.createCursorKeys();
@@ -182,7 +229,7 @@ class MainScene extends Phaser.Scene {
 
         if (tecla != null && !this.isMoving) {
             usandoTeclas = true;
-            console.log('se presiono una tecla');
+            
     
             if (tecla.left.isDown) {
                 this.player.setVelocityX(-160);
@@ -195,23 +242,29 @@ class MainScene extends Phaser.Scene {
                     this.player.anims.play('right');
                 }
             } else {
-                if (this.player.body.velocity.x === 0) {
-                    console.log('entro a cero');
-                    if (!this.player.anims.isPlaying || this.player.anims.currentAnim.key !== 'turn') {
-                        this.player.anims.play('turn');
-                    }
+                usandoTeclas = false;
+                if(!usandoTeclas){
+
                     this.player.setVelocityX(0);
+                    this.player.anims.play('turn');
                 }
+                
             }
-        }/*
-        }else{
-            console.log('nada');
+            if (tecla.up.isDown && this.player.body.touching.down) {
+                this.player.setVelocityY(-300);
+                console.log('update: jumping with keyboard');
+            } 
+        }
+        if(laCopa){
+
+            this.copa=this.physics.add.sprite(320, 0, 'copa').setScale(1.2);
+            this.copa.setCollideWorldBounds(true);
+            this.physics.add.collider(this.copa, this.platCopa);
+            this.physics.add.overlap(this.player, this.copa, this.agarroCopa, null, this);
+            laCopa=false;
         }
         
-        if (tecla.up.isDown && this.player.body.touching.down) {
-            this.player.setVelocityY(-300);
-            console.log('update: jumping with keyboard');
-        } */
+        
     } 
     
 }
@@ -228,14 +281,16 @@ class Menu extends Phaser.Scene {
     update() { }
 }
 
-class LevelScene extends Phaser.Scene {
+class WinScene extends Phaser.Scene {
     constructor() {
-        super('levelScene');
+        super('winScene');
     }
 
     preload() { }
 
-    create() { }
+    create() { 
+        this.add.text(250, 350, 'Ganaste el juego', { fontSize: '64px', fill: '#FFF' }).setOrigin(0.5);
+    }
 
     update() { }
 }
@@ -271,7 +326,10 @@ class EndScene extends Phaser.Scene {
 
     preload() { }
 
-    create() { }
+    create() { 
+        this.add.text(250, 350, 'Game Over', { fontSize: '64px', fill: '#FFF' }).setOrigin(0.5);
+
+    }
 
     update() { }
 }
@@ -287,7 +345,7 @@ const config = {
             debug: false
         }
     },
-    scene: [MainScene, Menu, LevelScene, ModeScene, ControlsScene, EndScene],
+    scene: [MainScene, Menu, WinScene, ModeScene, ControlsScene, EndScene],
     scale: {
         mode: Phaser.Scale.FIT
     }
