@@ -3,6 +3,8 @@ var playerQuantity = 1;
 var score = 0;
 var pelotas = '';
 var animLeft='';
+var jugador= '';
+var usandoTeclas=false;
 
 class MainScene extends Phaser.Scene {
     constructor() {
@@ -34,35 +36,15 @@ class MainScene extends Phaser.Scene {
             platform.create(320, 560, 'platform1');
             platform.create(10, 450, 'ground');
         }
-        if (level == 2) {
-            platform.create(100, 100, 'ground');
-            platform.create(1000, 100, 'ground');
-            platform.create(500, 360, 'ground');
-            platform.create(200, 250, 'ground');
-            platform.create(870, 230, 'ground');
-        }
-        if (level == 3) {
-            platform.create(500, 100, 'ground');
-            platform.create(30, 100, 'ground');
-            platform.create(1000, 100, 'ground');
-            platform.create(50, 360, 'ground');
-            platform.create(300, 250, 'ground');
-            platform.create(560, 400, 'ground');
-            platform.create(870, 230, 'ground');
-        }
+       
 
-        this.player = this.physics.add.sprite(900, 300, 'dude').setScale(2);
+        jugador=this.player = this.physics.add.sprite(900, 300, 'dude').setScale(2);
         this.player.setCollideWorldBounds(true);
         this.player.setBounce(0.2);
         this.player.score = 0;
         this.physics.add.collider(this.player, platform);
 
-        if (playerQuantity == 2) {
-            this.player2 = this.physics.add.sprite(100, 300, 'secondPlayer');
-            this.player2.setCollideWorldBounds(true);
-            this.player2.setBounce(0.2);
-            this.physics.add.collider(this.player2, platform);
-        }
+        
 
         // Crear el grupo de pelotas
         this.pelotas = this.physics.add.group();
@@ -79,15 +61,6 @@ class MainScene extends Phaser.Scene {
 
         // Configurar la superposición entre el jugador y las pelotas
         this.physics.add.overlap(this.player, this.pelotas, this.agarroPelota, null, this);
-
-        // Configurar controles táctiles
-        this.input.on('pointerdown', this.startMove, this);
-        this.input.on('pointermove', this.movePlayer, this);
-        this.input.on('pointerup', this.stopMove, this);
-
-        this.isMoving = false;
-        this.startPointerX = 0;
-        this.startPointerY = 0;
 
         // Animaciones
         this.anims.create({
@@ -126,10 +99,23 @@ class MainScene extends Phaser.Scene {
             frames: [{ key: 'dude', frame: 4 }],
             frameRate: 20
         });
+
+        // Configurar controles táctiles
+         // Configurar controles táctiles
+         this.input.on('pointerdown', this.startMove, this);
+         this.input.on('pointermove', this.movePlayer, this);
+         this.input.on('pointerup', this.stopMove, this);
+ 
+         this.isMoving = false;
+
+        
     }
 
     startMove(pointer) {
         this.isMoving = true;
+        usandoTeclas=false;
+        
+        console.log('se cancelo tecla');
         this.startPointerX = pointer.x;
         this.startPointerY = pointer.y;
         this.movePlayer(pointer);
@@ -139,49 +125,45 @@ class MainScene extends Phaser.Scene {
         if (this.isMoving) {
             const deltaX = pointer.x - this.startPointerX;
             const deltaY = pointer.y - this.startPointerY;
-            console.log('movePlayer: moving', deltaX, deltaY);
-    
-            if (deltaX < -10) {
+
+            if (deltaX < -10 && !usandoTeclas) {
+                // Mover izquierda
                 this.player.setVelocityX(-160);
-                console.log('movePlayer: moving left');
-                if (!this.player.anims.isPlaying || this.player.anims.currentAnim.key !== 'leftTactil') {
-                    animLeft=true;
-                    console.log('movePlayer: playing left tactil animation');
+                if (!this.player.anims.isPlaying  || this.player.anims.currentAnim.key !== 'leftTactil' ) {
+                    this.player.anims.play('leftTactil');
                 }
             } else if (deltaX > 10) {
+                // Mover derecha
                 this.player.setVelocityX(160);
-                console.log('movePlayer: moving right');
                 if (!this.player.anims.isPlaying || this.player.anims.currentAnim.key !== 'rightTactil') {
                     this.player.anims.play('rightTactil');
-                    console.log('movePlayer: playing right tactil animation');
                 }
             } else {
+                // Detener movimiento horizontal
                 this.player.setVelocityX(0);
-                console.log('movePlayer: stopping horizontal movement');
                 if (!this.player.anims.isPlaying || this.player.anims.currentAnim.key !== 'turnTactil') {
                     this.player.anims.play('turnTactil');
-                    console.log('movePlayer: playing turn tactil animation');
                 }
             }
-    
-            if (deltaY < -30 && this.player.body.touching.down) {
-                this.player.setVelocityY(-300);
-                console.log('movePlayer: jumping');
-            }
+            
         }
     }
+
     
 
     stopMove() {
         this.isMoving = false;
-        this.player.setVelocityX(0);
-        if (!this.player.anims.isPlaying || this.player.anims.currentAnim.key !== 'turn') {
-            this.player.anims.play('leftTactil',true);
-            this.player.tinte('#000');
+        if(!usandoTeclas){
+
+            this.player.setVelocityX(0);
         }
+        /* if (!this.player.anims.isPlaying || this.player.anims.currentAnim.key !== 'turn') {
+            this.player.anims.play('turn');
+        } */
     }
 
-    agarroPelota(player, pelota) {
+
+   /*  agarroPelota(player, pelota) {
         pelota.disableBody(true, true);
         player.score += 10;
 
@@ -192,43 +174,45 @@ class MainScene extends Phaser.Scene {
                 child.enableBody(true, x, y, true, true);
             });
         }
-    }
-
+    } */
+    
     update() {
         var tecla = this.input.keyboard.createCursorKeys();
-        if(animLeft){
-            this.player.anims.play('leftTactil',true);
-            console.log('update: se movio con el tactil');
-            animLeft=false; 
+        animLeft=true;
+
+        if (tecla != null && !this.isMoving) {
+            usandoTeclas = true;
+            console.log('se presiono una tecla');
+    
+            if (tecla.left.isDown) {
+                this.player.setVelocityX(-160);
+                if (!this.player.anims.isPlaying || this.player.anims.currentAnim.key !== 'left') {
+                    this.player.anims.play('left');
+                }
+            } else if (tecla.right.isDown) {
+                this.player.setVelocityX(160);
+                if (!this.player.anims.isPlaying || this.player.anims.currentAnim.key !== 'right') {
+                    this.player.anims.play('right');
+                }
+            } else {
+                if (this.player.body.velocity.x === 0) {
+                    console.log('entro a cero');
+                    if (!this.player.anims.isPlaying || this.player.anims.currentAnim.key !== 'turn') {
+                        this.player.anims.play('turn');
+                    }
+                    this.player.setVelocityX(0);
+                }
+            }
+        }/*
+        }else{
+            console.log('nada');
         }
-        if ((tecla.left.isDown || this.input.activePointer.isDown && this.input.activePointer.x < this.game.config.width / 2) && !this.input.activePointer.isDown) {
-            this.player.setVelocityX(-160);
-            
-            console.log('update: moving left with keyboard');
-            if (!this.player.anims.isPlaying || this.player.anims.currentAnim.key !== 'left') {
-                this.player.anims.play('left');
-                console.log('update: playing left animation');
-            }
-        } else if ((tecla.right.isDown || this.input.activePointer.isDown && this.input.activePointer.x > this.game.config.width / 2) && !this.input.activePointer.isDown) {
-            this.player.setVelocityX(160);
-            console.log('update: moving right with keyboard');
-            if (!this.player.anims.isPlaying || this.player.anims.currentAnim.key !== 'right') {
-                this.player.anims.play('right');
-                console.log('update: playing right animation');
-            }
-        } else {
-            this.player.setVelocityX(0);
-            
-            if (!this.player.anims.isPlaying || this.player.anims.currentAnim.key !== 'turn') {
-                this.player.anims.play('turn');
-                
-            }
-        }
+        
         if (tecla.up.isDown && this.player.body.touching.down) {
             this.player.setVelocityY(-300);
             console.log('update: jumping with keyboard');
-        }
-    }
+        } */
+    } 
     
 }
 
